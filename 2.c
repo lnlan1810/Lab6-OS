@@ -9,6 +9,7 @@
 
 #define MAX_BYTES 255
 
+// Функция поиска заданной комбинации в файле
 void search_in_file(const char *filename, const char *search_string) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
@@ -34,12 +35,14 @@ void search_in_file(const char *filename, const char *search_string) {
 
         totalBytesRead += bytesRead;
     }
-
+    
+    // Вывод информации о процессе поиска в файле
     printf("PID: %d, File: %s, Total Bytes Read: %zu, Occurrences: %d\n", getpid(), filename, totalBytesRead, occurrences);
 
     fclose(file);
 }
 
+// Функция поиска в директории
 void search_in_directory(const char *dirname, const char *search_string, int max_processes) {
     DIR *dir = opendir(dirname);
     if (dir == NULL) {
@@ -50,9 +53,14 @@ void search_in_directory(const char *dirname, const char *search_string, int max
     struct dirent *entry;
     int running_processes = 0;
 
+    // Функция поиска в директории
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_REG) {
+        if (entry->d_type == DT_REG) // Если это обычный файл
+        {
             char path[PATH_MAX];
+
+            //Использование `snprintf` для создания полного пути файла, объединяя текущий каталог (`dirname`) с именем файла (`entry->d_name`). 
+            //Если размер пути превышает заданный максимум (`PATH_MAX`), выводится сообщение об ошибке, и программа завершается.
             if (snprintf(path, sizeof(path), "%s/%s", dirname, entry->d_name) >= sizeof(path)) {
                 fprintf(stderr, "Path buffer overflow\n");
                 closedir(dir);
@@ -84,6 +92,9 @@ void search_in_directory(const char *dirname, const char *search_string, int max
 
     closedir(dir);
 
+    //Ожидание завершения всех дочерних процессов. Если один из дочерних процессов завершается, 
+    //уменьшается количество выполняющихся дочерних процессов. Это гарантирует, 
+    //что родительский процесс подождет завершения всех дочерних задач перед завершением.
     while (running_processes > 0) {
         int status;
         wait(&status);
