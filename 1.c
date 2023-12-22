@@ -50,6 +50,8 @@ int main() {
             printf("Second child process - PID: %d\n", child2_pid);
            
             system("ps -x");
+            wait(NULL);
+            wait(NULL);
             
             exit(0);
         }
