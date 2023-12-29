@@ -46,9 +46,7 @@ int main() {
         } else {
             // Parent process
             printf("Parent process - PID: %d\n", parent_pid);
-            printf("First child process - PID: %d\n", child1_pid);
-            printf("Second child process - PID: %d\n", child2_pid);
-           
+            
             system("ps -x");
             wait(NULL);
             wait(NULL);
