@@ -15,7 +15,7 @@ void displayTimeWithMilliseconds() {
     char timeBuffer[26];
     strftime(timeBuffer, 26, "%H:%M:%S", timeInfo);
 
-    printf("%s:%02ld\n", timeBuffer, (currentTime.tv_usec / 1000) % 1000 / 10);
+    printf("%s:%02ld\n", timeBuffer, (currentTime.tv_usec ) % 1000/10);
 }
 
 int main() {
