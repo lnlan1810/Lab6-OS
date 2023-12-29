@@ -9,7 +9,7 @@
 
 #define MAX_BYTES 255
 
-// Функция поиска заданной комбинации в файле
+// функция выполняет поиск заданной комбинации байт в файле и выводит информацию о процессе поиска.
 void search_in_file(const char *filename, const char *search_string) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
@@ -42,7 +42,7 @@ void search_in_file(const char *filename, const char *search_string) {
     fclose(file);
 }
 
-// Функция поиска в директории
+//функция открывает директорию, обходит все файлы в ней, и для каждого файла запускает отдельный процесс поиска.
 void search_in_directory(const char *dirname, const char *search_string, int max_processes) {
     DIR *dir = opendir(dirname);
     if (dir == NULL) {
@@ -66,14 +66,14 @@ void search_in_directory(const char *dirname, const char *search_string, int max
                 closedir(dir);
                 exit(EXIT_FAILURE);
             }
-
+            //используется `fork` для создания нового процесса для каждого файла.
             pid_t child_pid = fork();
 
             if (child_pid == -1) {
                 perror("Error creating child process");
                 exit(EXIT_FAILURE);
             } else if (child_pid == 0) {
-                // Child process
+                // Дочерний процесс вызывает "search_in_file" для выполнения поиска в конкретном файле.
                 search_in_file(path, search_string);
                 exit(EXIT_SUCCESS);
             } else {
