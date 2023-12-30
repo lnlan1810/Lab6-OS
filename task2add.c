@@ -9,8 +9,6 @@
 
 #define MAX_BYTES 255
 
-int running_processes = 0;
-
 void search_in_file(const char *filename, const char *search_string) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
@@ -36,19 +34,10 @@ void search_in_file(const char *filename, const char *search_string) {
 
         totalBytesRead += bytesRead;
     }
-    
-    printf("PID: %d, File: %s, Total Bytes Read: %zu, Occurrences: %d, Running Processes: %d\n",
-           getpid(), filename, totalBytesRead, occurrences, running_processes);
+
+    printf("PID: %d, File: %s, Total Bytes Read: %zu, Occurrences: %d\n", getpid(), filename, totalBytesRead, occurrences);
 
     fclose(file);
-}
-
-void increment_running_processes() {
-    running_processes++;
-}
-
-void decrement_running_processes() {
-    running_processes--;
 }
 
 void search_in_directory(const char *dirname, const char *search_string, int max_processes) {
@@ -59,11 +48,10 @@ void search_in_directory(const char *dirname, const char *search_string, int max
     }
 
     struct dirent *entry;
-
-    increment_running_processes();
+    int running_processes = 0;
 
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_REG) 
+        if (entry->d_type == DT_REG) // Если это обычный файл
         {
             char path[PATH_MAX];
 
@@ -81,13 +69,22 @@ void search_in_directory(const char *dirname, const char *search_string, int max
             } else if (child_pid == 0) {
                 search_in_file(path, search_string);
                 exit(EXIT_SUCCESS);
+            } else {
+                running_processes++;
+                printf("PID: %d, File: %s, Total Bytes Read: 0, Occurrences: 0, Number of Running Processes: %d\n", getpid(), path, running_processes);
+
+                if (running_processes >= max_processes) {
+                    int status;
+                    wait(&status);
+                    if (WIFEXITED(status)) {
+                        running_processes--;
+                    }
+                }
             }
         }
     }
 
     closedir(dir);
-
-    decrement_running_processes();
 
     while (running_processes > 0) {
         int status;
