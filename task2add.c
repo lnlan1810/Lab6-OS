@@ -9,6 +9,10 @@
 
 #define MAX_BYTES 255
 
+// Biến toàn cục để lưu số lượng tiến trình đang chạy
+int current_processes_count = 0;
+
+// Функция выполняет поиск заданной комбинации байт в файле и выводит информацию о процессе поиска.
 void search_in_file(const char *filename, const char *search_string) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
@@ -35,11 +39,13 @@ void search_in_file(const char *filename, const char *search_string) {
         totalBytesRead += bytesRead;
     }
 
-    printf("PID: %d, File: %s, Total Bytes Read: %zu, Occurrences: %d\n", getpid(), filename, totalBytesRead, occurrences);
+    // Вывод информации о процессе поиска в файле с номером текущего процесса
+    printf("PID: %d, File: %s, Total Bytes Read: %zu, Occurrences: %d, Number of running processes: %d\n", getpid(), filename, totalBytesRead, occurrences, current_processes_count);
 
     fclose(file);
 }
 
+// Функция открывает директорию, обходит все файлы в ней, и для каждого файла запускает отдельный процесс поиска.
 void search_in_directory(const char *dirname, const char *search_string, int max_processes) {
     DIR *dir = opendir(dirname);
     if (dir == NULL) {
@@ -48,8 +54,9 @@ void search_in_directory(const char *dirname, const char *search_string, int max
     }
 
     struct dirent *entry;
-    int running_processes = 0;
+    int total_processes_count = 0;
 
+    // Функция поиска в директории
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_type == DT_REG) // Если это обычный файл
         {
@@ -61,37 +68,43 @@ void search_in_directory(const char *dirname, const char *search_string, int max
                 exit(EXIT_FAILURE);
             }
 
+            // Проверка, чтобы не превысить максимальное количество одновременно работающих процессов
+            while (current_processes_count >= max_processes) {
+                int status;
+                pid_t finished_pid = wait(&status);
+                if (WIFEXITED(status)) {
+                    current_processes_count--;
+                } 
+            }
+
+            // Создание нового процесса
             pid_t child_pid = fork();
 
             if (child_pid == -1) {
                 perror("Error creating child process");
                 exit(EXIT_FAILURE);
             } else if (child_pid == 0) {
+                // Дочерний процесс вызывает "search_in_file" для выполнения поиска в конкретном файле.
                 search_in_file(path, search_string);
                 exit(EXIT_SUCCESS);
             } else {
-                running_processes++;
-                printf("PID: %d, File: %s, Total Bytes Read: 0, Occurrences: 0, Number of Running Processes: %d\n", getpid(), path, running_processes);
-
-                if (running_processes >= max_processes) {
-                    int status;
-                    wait(&status);
-                    if (WIFEXITED(status)) {
-                        running_processes--;
-                    }
-                }
+                // Родительский процесс
+                current_processes_count++;
+                total_processes_count++;
+           
             }
         }
     }
 
     closedir(dir);
 
-    while (running_processes > 0) {
+    // Ожидание завершения всех дочерних процессов.
+    while (current_processes_count > 0) {
         int status;
-        wait(&status);
+        pid_t finished_pid = wait(&status);
         if (WIFEXITED(status)) {
-            running_processes--;
-        }
+            current_processes_count--;
+        } 
     }
 }
 
