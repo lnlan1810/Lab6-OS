@@ -9,7 +9,6 @@
 
 #define MAX_BYTES 255
 
-// Biến toàn cục để lưu số lượng tiến trình đang chạy
 int current_processes_count = 0;
 
 // Функция выполняет поиск заданной комбинации байт в файле и выводит информацию о процессе поиска.
